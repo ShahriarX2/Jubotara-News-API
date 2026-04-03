@@ -1,11 +1,16 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
-    name: String,
+    name: {
+        type: String,
+        required: true,
+        trim: true,
+    },
     email: {
         type: String,
         required: true,
         unique: true,
+        lowercase: true,
     },
     password: {
         type: String,
@@ -13,10 +18,14 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ["administrator", "admin", "author", "reporter"],
-        default: "reporter", // future: editor, reporter
+        enum: ["administrator", "admin", "author", "reporter", "user"],
+        default: "user",
     },
     isActivated: {
+        type: Boolean,
+        default: false,
+    },
+    emailVerified: {
         type: Boolean,
         default: false,
     },
@@ -28,7 +37,10 @@ const userSchema = new mongoose.Schema({
     },
     activationTokenExpires: {
         type: Date,
+    },
+    activationExpires: {
+        type: Date,
     }
 }, { timestamps: true });
 
-export default mongoose.model("User", userSchema);
+export default mongoose.models.User || mongoose.model("User", userSchema);

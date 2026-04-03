@@ -2,12 +2,21 @@ import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+const sanitizeUser = (user) => ({
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    isActivated: user.isActivated,
+});
+
 // Register (only first time or manual use)
 export const register = async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
-        const exist = await User.findOne({ email });
+        const normalizedEmail = email?.trim().toLowerCase();
+        const exist = await User.findOne({ email: normalizedEmail });
         if (exist) {
             return res.status(400).json({ message: "User already exists" });
         }
@@ -16,11 +25,11 @@ export const register = async (req, res) => {
 
         const user = await User.create({
             name,
-            email,
+            email: normalizedEmail,
             password: hashedPassword,
         });
 
-        res.status(201).json(user);
+        res.status(201).json({ success: true, user: sanitizeUser(user) });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -31,7 +40,8 @@ export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        const user = await User.findOne({ email });
+        const normalizedEmail = email?.trim().toLowerCase();
+        const user = await User.findOne({ email: normalizedEmail });
         if (!user) {
             return res.status(400).json({ message: "Invalid credentials" });
         }
@@ -49,13 +59,23 @@ export const login = async (req, res) => {
 
         res.json({
             token,
-            user: {
-                id: user._id,
-                email: user.email,
-                role: user.role,
-            },
+            user: sanitizeUser(user),
         });
 
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+export const me = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json({ user: sanitizeUser(user) });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

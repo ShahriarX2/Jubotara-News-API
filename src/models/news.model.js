@@ -30,6 +30,9 @@ const newsSchema = new Schema({
         ref: 'User',
         required: false,
     },
+    authorName: {
+        type: String,
+    },
     status: {
         type: String,
         enum: ['published', 'pending', 'draft'],
@@ -43,10 +46,42 @@ const newsSchema = new Schema({
         type: Boolean,
         default: false,
     },
+    publishedAt: {
+        type: Date,
+        default: Date.now,
+    },
+    metaTitle: {
+        type: String,
+    },
+    metaDescription: {
+        type: String,
+    },
+    likesCount: {
+        type: Number,
+        default: 0,
+    },
     viewsCount: {
         type: Number,
         default: 0,
     },
+    comments: [
+        {
+            userId: {
+                type: Schema.Types.ObjectId,
+                ref: "User",
+            },
+            userName: String,
+            text: String,
+            createdAt: {
+                type: Date,
+                default: Date.now,
+            },
+        }
+    ],
 }, { timestamps: true });
 
-export default mongoose.model("News", newsSchema);
+newsSchema.index({ category: 1, status: 1, publishedAt: -1 });
+newsSchema.index({ status: 1, publishedAt: -1 });
+newsSchema.index({ isFeatured: 1, status: 1, publishedAt: -1 });
+
+export default mongoose.models.News || mongoose.model("News", newsSchema);
