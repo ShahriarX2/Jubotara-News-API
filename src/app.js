@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import multer from "multer";
 
 import newsRoutes from "./routes/news.routes.js";
 
@@ -9,5 +10,14 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/v1/news", newsRoutes);
+
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        res.status(400).json({ error: err.message });
+        return;
+    }
+
+    next(err);
+});
 
 export default app;

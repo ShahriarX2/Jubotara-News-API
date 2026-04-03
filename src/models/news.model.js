@@ -1,4 +1,4 @@
-import mongoose, { Schema, Model } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 const newsSchema = new Schema({
     headline: {
@@ -28,7 +28,7 @@ const newsSchema = new Schema({
     authorId: {
         type: Schema.Types.ObjectId,
         ref: 'User',
-        required: true,
+        required: false,
     },
     status: {
         type: String,
