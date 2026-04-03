@@ -3,6 +3,7 @@ import cors from "cors";
 import multer from "multer";
 
 import newsRoutes from "./routes/news.routes.js";
+import frontendRoutes from "./routes/frontend.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import teamRoutes from "./routes/team.routes.js";
@@ -30,6 +31,7 @@ app.get("/api/v1/health", (req, res) => {
 });
 
 app.use("/api/v1/news", newsRoutes);
+app.use("/api/v1/frontend", frontendRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/team", teamRoutes);

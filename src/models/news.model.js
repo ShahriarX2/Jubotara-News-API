@@ -1,9 +1,16 @@
 import mongoose, { Schema } from "mongoose";
+import slugify from "../utils/slugify.js";
 
 const newsSchema = new Schema({
     headline: {
         type: String,
         required: true,
+    },
+    slug: {
+        type: String,
+        unique: true,
+        trim: true,
+        index: true,
     },
     reporterInfo: {
         type: String,
@@ -79,6 +86,13 @@ const newsSchema = new Schema({
         }
     ],
 }, { timestamps: true });
+
+newsSchema.pre("save", async function () {
+    if (!this.isModified("headline")) return;
+    if (!this.slug) {
+        this.slug = slugify(this.headline);
+    }
+});
 
 newsSchema.index({ category: 1, status: 1, publishedAt: -1 });
 newsSchema.index({ status: 1, publishedAt: -1 });

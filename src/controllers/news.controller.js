@@ -124,14 +124,12 @@ export const updateNews = asyncHandler(async (req, res) => {
 
         delete req.body.status;
         delete req.body.approvedBy;
-    } else if (req.body.status === "published" && !existingNews.approvedBy) {
-        req.body.approvedBy = req.user.id;
+    if (req.body.status === "published" && !existingNews.approvedBy) {
+        existingNews.approvedBy = req.user.id;
     }
 
-    const updated = await News.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,
-        runValidators: true,
-    });
+    Object.assign(existingNews, req.body);
+    const updated = await existingNews.save();
 
     res.json(updated);
 });

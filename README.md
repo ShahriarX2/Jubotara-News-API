@@ -108,6 +108,16 @@ Role behavior:
 - `GET /health`
 - `POST /auth/register`
 - `POST /auth/login`
+- `GET /frontend/settings`
+- `GET /frontend/menu`
+- `GET /frontend/logo`
+- `GET /frontend/news`
+- `GET /frontend/news/:slug`
+- `GET /frontend/news/search`
+- `GET /frontend/categories`
+- `GET /frontend/categories/:slug`
+- `GET /frontend/team`
+- `GET /frontend/videos`
 - `GET /news`
 - `GET /news/search`
 - `GET /news/:id`
@@ -156,6 +166,81 @@ Response:
 {
   "success": true,
   "message": "API is running"
+}
+```
+
+### Public Frontend API
+
+New stable endpoints for the public website. These are under `/api/v1/frontend/*` and provide stable, read-only data shapes.
+
+#### `GET /api/v1/frontend/settings`
+
+Get all public settings.
+
+#### `GET /api/v1/frontend/menu`
+
+Get all navbar items sorted by order.
+
+#### `GET /api/v1/frontend/logo`
+
+Get the current site logo.
+
+#### `GET /api/v1/frontend/news`
+
+Get published news with pagination and filtering.
+
+Query params:
+- `page`: default `1`
+- `per_page`: default `10`
+- `category_slug`: filter by category slug
+- `featured`: set to `true` to get only featured news
+- `search`: search headline by keyword
+
+#### `GET /api/v1/frontend/news/:slug`
+
+Get a single news item by slug. Also increments `viewsCount`.
+
+#### `GET /api/v1/frontend/news/search?q=...`
+
+Full search of published news by headline or content.
+
+#### `GET /api/v1/frontend/categories`
+
+Get all categories.
+
+#### `GET /api/v1/frontend/categories/:slug`
+
+Get a single category by slug.
+
+#### `GET /api/v1/frontend/team`
+
+Get all team members sorted by order.
+
+#### `GET /api/v1/frontend/videos`
+
+Get all videos sorted by latest.
+
+#### Standard Response Shapes
+
+**List Endpoints:**
+```json
+{
+  "success": true,
+  "data": [],
+  "meta": {
+    "page": 1,
+    "perPage": 10,
+    "total": 0,
+    "totalPages": 0
+  }
+}
+```
+
+**Single Resource Endpoints:**
+```json
+{
+  "success": true,
+  "data": {}
 }
 ```
 
@@ -675,6 +760,7 @@ Fields:
 Fields:
 
 - `headline`
+- `slug`
 - `reporterInfo`
 - `content`
 - `category`

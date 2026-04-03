@@ -3,8 +3,9 @@ const slugify = (value = "") =>
         .toString()
         .trim()
         .toLowerCase()
-        .replace(/[^\w\s-]/g, "")
         .replace(/\s+/g, "-")
-        .replace(/-+/g, "-");
+        .replace(/[^\p{L}\p{N}-]/gu, "")
+        .replace(/-+/g, "-")
+        .replace(/^-+|-+$/g, "");
 
 export default slugify;
