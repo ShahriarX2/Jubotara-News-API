@@ -124,6 +124,7 @@ export const updateNews = asyncHandler(async (req, res) => {
 
         delete req.body.status;
         delete req.body.approvedBy;
+    }
     if (req.body.status === "published" && !existingNews.approvedBy) {
         existingNews.approvedBy = req.user.id;
     }
