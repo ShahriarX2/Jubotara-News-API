@@ -4,6 +4,7 @@ import {
     deleteNews,
     getNews,
     getNewsById,
+    resolveSlugById,
     searchNews,
     updateNews,
 } from "../controllers/news.controller.js";
@@ -12,6 +13,20 @@ import authMiddleware from "../middleware/auth.middleware.js";
 import asyncHandler from "../utils/async-handler.js";
 
 const router = express.Router();
+
+/** Multer only for multipart; JSON PUTs stay on express.json() body. */
+const newsImageUpload = upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "imageSrc", maxCount: 1 },
+]);
+
+const multipartNewsFields = (req, res, next) => {
+    const ct = req.headers["content-type"] || "";
+    if (ct.includes("multipart/form-data")) {
+        return newsImageUpload(req, res, next);
+    }
+    next();
+};
 
 router.get(
     "/",
@@ -25,17 +40,10 @@ router.get(
     getNews
 );
 router.get("/search", searchNews);
+router.get("/resolve-slug/:id", resolveSlugById);
 router.get("/:id", getNewsById);
-router.post(
-    "/",
-    authMiddleware,
-    upload.fields([
-        { name: "image", maxCount: 1 },
-        { name: "imageSrc", maxCount: 1 },
-    ]),
-    createNews
-);
-router.put("/:id", authMiddleware, updateNews);
+router.post("/", authMiddleware, newsImageUpload, createNews);
+router.put("/:id", authMiddleware, multipartNewsFields, updateNews);
 router.delete("/:id", authMiddleware, deleteNews);
 
 export default router;

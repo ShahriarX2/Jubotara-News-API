@@ -97,7 +97,7 @@ export const searchNews = asyncHandler(async (req, res) => {
 });
 
 export const getNewsById = asyncHandler(async (req, res) => {
-    const news = await News.findById(req.params.id);
+    const news = await News.findById(req.params.id).lean();
 
     if (!news) {
         return res.status(404).json({ error: "News not found" });
@@ -106,7 +106,36 @@ export const getNewsById = asyncHandler(async (req, res) => {
     res.json(news);
 });
 
+/** Legacy ID → slug for redirects (ObjectId in URL). */
+export const resolveSlugById = asyncHandler(async (req, res) => {
+    try {
+        const doc = await News.findById(req.params.id).select("slug").lean();
+
+        if (!doc || !doc.slug) {
+            return res.status(404).json({ error: "News not found" });
+        }
+
+        return res.status(200).json({ slug: doc.slug });
+    } catch (err) {
+        if (err?.name === "CastError") {
+            return res.status(404).json({ error: "News not found" });
+        }
+        console.error(err);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 export const updateNews = asyncHandler(async (req, res) => {
+    const uploadedFile =
+        req.files?.image?.[0] ??
+        req.files?.imageSrc?.[0] ??
+        req.file;
+
+    if (uploadedFile) {
+        const result = await uploadBufferToCloudinary(uploadedFile.buffer);
+        req.body.imageSrc = result.secure_url;
+    }
+
     const existingNews = await News.findById(req.params.id);
 
     if (!existingNews) {
@@ -129,7 +158,34 @@ export const updateNews = asyncHandler(async (req, res) => {
         existingNews.approvedBy = req.user.id;
     }
 
-    Object.assign(existingNews, req.body);
+    if (req.body.isFeatured !== undefined) {
+        req.body.isFeatured =
+            req.body.isFeatured === true ||
+            req.body.isFeatured === "true" ||
+            req.body.isFeatured === "1";
+    }
+
+    const allowed = [
+        "headline",
+        "content",
+        "category",
+        "reporterInfo",
+        "imageCaption",
+        "imageSrc",
+        "status",
+        "isFeatured",
+        "metaTitle",
+        "metaDescription",
+        "slug",
+    ];
+    const patch = {};
+    for (const key of allowed) {
+        if (Object.prototype.hasOwnProperty.call(req.body, key)) {
+            patch[key] = req.body[key];
+        }
+    }
+
+    Object.assign(existingNews, patch);
     const updated = await existingNews.save();
 
     res.json(updated);

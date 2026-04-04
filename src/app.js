@@ -3,6 +3,7 @@ import cors from "cors";
 import multer from "multer";
 
 import newsRoutes from "./routes/news.routes.js";
+import { resolveSlugById } from "./controllers/news.controller.js";
 import frontendRoutes from "./routes/frontend.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
@@ -30,6 +31,7 @@ app.get("/api/v1/health", (req, res) => {
     res.json({ success: true, message: "API is running" });
 });
 
+app.get("/api/news/resolve-slug/:id", resolveSlugById);
 app.use("/api/v1/news", newsRoutes);
 app.use("/api/v1/frontend", frontendRoutes);
 app.use("/api/v1/auth", authRoutes);
@@ -51,6 +53,16 @@ app.use((err, req, res, next) => {
 
     if (err?.name === "ValidationError") {
         res.status(400).json({ error: err.message });
+        return;
+    }
+
+    if (err?.name === "CastError") {
+        res.status(400).json({ error: "Invalid id or field value" });
+        return;
+    }
+
+    if (err?.code === 11000) {
+        res.status(409).json({ error: "Duplicate value (e.g. slug already exists)" });
         return;
     }
 

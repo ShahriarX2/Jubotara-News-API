@@ -120,6 +120,7 @@ Role behavior:
 - `GET /frontend/videos`
 - `GET /news`
 - `GET /news/search`
+- `GET /news/resolve-slug/:id` (MongoDB id → slug; legacy redirects)
 - `GET /news/:id`
 - `GET /category`
 - `GET /team`
@@ -365,6 +366,43 @@ Response:
 {
   "success": true,
   "data": []
+}
+```
+
+#### `GET /api/v1/news/resolve-slug/:id` and `GET /api/news/resolve-slug/:id`
+
+Resolve the canonical `slug` for a news item by its MongoDB `_id`. Use this when redirecting old ID-based links to slug-based URLs (for example from a Next.js middleware or `getServerSideProps`).
+
+Auth: not required.
+
+The handler is the same on both paths:
+
+- `GET /api/v1/news/resolve-slug/:id` — consistent with the rest of the API under `/api/v1`.
+- `GET /api/news/resolve-slug/:id` — available without the `v1` segment if your redirect or proxy targets `/api/news/...`.
+
+Only the `slug` field is read from the database.
+
+**200 OK**
+
+```json
+{
+  "slug": "example-news-slug"
+}
+```
+
+**404 Not Found** — no document, no `slug` on the document, or invalid ObjectId string:
+
+```json
+{
+  "error": "News not found"
+}
+```
+
+**500 Internal Server Error** — unexpected failure:
+
+```json
+{
+  "error": "Internal server error"
 }
 ```
 
@@ -860,7 +898,7 @@ Both separated clients should call this API through a configurable base URL, for
 NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api/v1
 ```
 
-Do not keep using relative Next.js internal routes like `/api/news` once the frontend and admin are fully separated.
+Prefer this API’s base URL for data fetching instead of Next.js **internal** API route handlers. The backend also exposes `GET /api/news/resolve-slug/:id` for ID→slug redirects; that path is served by this Express app, not by Next.js.
 
 ## Current Scope
 
