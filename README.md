@@ -960,8 +960,10 @@ Examples:
 
 The API implements rate limiting to prevent abuse:
 
-- **General API**: 100 requests per 15 minutes per IP.
+- **General API**: 500 requests per 15 minutes per IP.
 - **Login**: 10 attempts per hour per IP.
+
+The API is configured with `app.set('trust proxy', 1)` to correctly identify client IPs when running behind a reverse proxy (e.g., Render, Cloudflare).
 
 ## Frontend / Admin Integration
 
