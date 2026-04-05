@@ -32,6 +32,12 @@ const newsSchema = new Schema({
         type: String,
         required: false, // Optional
     },
+    tags: [
+        {
+            type: String,
+            trim: true,
+        }
+    ],
     authorId: {
         type: Schema.Types.ObjectId,
         ref: 'User',

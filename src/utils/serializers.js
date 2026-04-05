@@ -15,6 +15,7 @@ export const serializeNews = (news) => ({
     metaTitle: news.metaTitle,
     metaDescription: news.metaDescription,
     viewsCount: news.viewsCount,
+    tags: news.tags || [],
 });
 
 export const serializeCategory = (category) => ({

@@ -15,6 +15,14 @@ export const createNews = asyncHandler(async (req, res) => {
         req.body.imageSrc = result.secure_url;
     }
 
+    if (req.body.tags && typeof req.body.tags === "string") {
+        try {
+            req.body.tags = JSON.parse(req.body.tags);
+        } catch (e) {
+            req.body.tags = req.body.tags.split(",").map(t => t.trim()).filter(t => t);
+        }
+    }
+
     const payload = {
         ...req.body,
         authorId: req.user.id,
@@ -87,6 +95,7 @@ export const searchNews = asyncHandler(async (req, res) => {
             { headline: { $regex: q, $options: "i" } },
             { content: { $regex: q, $options: "i" } },
             { category: { $regex: q, $options: "i" } },
+            { tags: { $regex: q, $options: "i" } },
         ],
     })
         .sort({ publishedAt: -1 })
@@ -158,6 +167,14 @@ export const updateNews = asyncHandler(async (req, res) => {
         existingNews.approvedBy = req.user.id;
     }
 
+    if (req.body.tags && typeof req.body.tags === "string") {
+        try {
+            req.body.tags = JSON.parse(req.body.tags);
+        } catch (e) {
+            req.body.tags = req.body.tags.split(",").map(t => t.trim()).filter(t => t);
+        }
+    }
+
     if (req.body.isFeatured !== undefined) {
         req.body.isFeatured =
             req.body.isFeatured === true ||
@@ -177,6 +194,7 @@ export const updateNews = asyncHandler(async (req, res) => {
         "metaTitle",
         "metaDescription",
         "slug",
+        "tags",
     ];
     const patch = {};
     for (const key of allowed) {

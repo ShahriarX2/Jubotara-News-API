@@ -111,6 +111,43 @@ export const getFrontendNewsBySlug = asyncHandler(async (req, res) => {
     });
 });
 
+export const getRelatedNews = asyncHandler(async (req, res) => {
+    const { slug } = req.params;
+    const { limit = 4 } = req.query;
+
+    const news = await News.findOne({ slug, status: "published" });
+
+    if (!news) {
+        return res.status(404).json({ success: false, message: "News not found" });
+    }
+
+    const relatedNews = await News.find({
+        status: "published",
+        category: news.category,
+        _id: { $ne: news._id },
+    })
+        .sort({ publishedAt: -1 })
+        .limit(parseInt(limit));
+
+    res.json({
+        success: true,
+        data: relatedNews.map(serializeNews),
+    });
+});
+
+export const getTrendingNews = asyncHandler(async (req, res) => {
+    const { limit = 5 } = req.query;
+
+    const news = await News.find({ status: "published" })
+        .sort({ viewsCount: -1, publishedAt: -1 })
+        .limit(parseInt(limit));
+
+    res.json({
+        success: true,
+        data: news.map(serializeNews),
+    });
+});
+
 export const getFrontendCategories = asyncHandler(async (req, res) => {
     const categories = await Category.find();
     res.json({

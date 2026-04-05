@@ -113,11 +113,17 @@ Role behavior:
 - `GET /frontend/logo`
 - `GET /frontend/news`
 - `GET /frontend/news/:slug`
+- `GET /frontend/news/:slug/related`
+- `GET /frontend/news/trending`
 - `GET /frontend/news/search`
 - `GET /frontend/categories`
 - `GET /frontend/categories/:slug`
 - `GET /frontend/team`
 - `GET /frontend/videos`
+- `POST /communication/newsletter/subscribe`
+- `POST /communication/contact`
+- `GET /sitemap.xml`
+- `GET /rss.xml`
 - `GET /news`
 - `GET /news/search`
 - `GET /news/resolve-slug/:id` (MongoDB id → slug; legacy redirects)
@@ -150,6 +156,8 @@ Role behavior:
 - `DELETE /admin/navbar/:id`
 - `POST /admin/settings`
 - `GET /admin/metrics`
+- `GET /communication/newsletter/subscribers`
+- `GET /communication/contact/messages`
 - `POST /settings/logo`
 - `DELETE /settings/logo/:id`
 
@@ -166,7 +174,10 @@ Response:
 ```json
 {
   "success": true,
-  "message": "API is running"
+  "message": "API is running",
+  "timestamp": "2026-04-05T07:59:00.000Z",
+  "uptime": 123.45,
+  "mongoStatus": "Connected"
 }
 ```
 
@@ -200,6 +211,14 @@ Query params:
 #### `GET /api/v1/frontend/news/:slug`
 
 Get a single news item by slug. Also increments `viewsCount`.
+
+#### `GET /api/v1/frontend/news/:slug/related`
+
+Get related articles from the same category.
+
+#### `GET /api/v1/frontend/news/trending`
+
+Get most viewed published news articles.
 
 #### `GET /api/v1/frontend/news/search?q=...`
 
@@ -432,6 +451,7 @@ Accepted body fields:
 - `authorName`
 - `status`
 - `isFeatured`
+- `tags` (JSON array or comma-separated string)
 - `publishedAt`
 - `metaTitle`
 - `metaDescription`
@@ -484,6 +504,34 @@ Response:
   "id": "news_id"
 }
 ```
+
+### Communication
+
+#### `POST /api/v1/communication/newsletter/subscribe`
+
+Add an email to the newsletter list.
+
+#### `POST /api/v1/communication/contact`
+
+Submit a contact form message.
+
+#### `GET /api/v1/communication/newsletter/subscribers`
+
+Get all newsletter subscribers. (Admin only)
+
+#### `GET /api/v1/communication/contact/messages`
+
+Get all contact form messages. (Admin only)
+
+### SEO & Syndication
+
+#### `GET /sitemap.xml`
+
+Dynamic XML sitemap.
+
+#### `GET /rss.xml`
+
+Dynamic RSS feed.
 
 ### Category
 
@@ -812,6 +860,7 @@ Fields:
 - `publishedAt`
 - `metaTitle`
 - `metaDescription`
+- `tags`
 - `likesCount`
 - `viewsCount`
 - `comments`
@@ -841,6 +890,21 @@ Fields:
 - `title`
 - `youtubeUrl`
 - `videoId`
+
+### Subscriber
+
+Fields:
+- `email`
+- `isActive`
+
+### Contact Message
+
+Fields:
+- `name`
+- `email`
+- `subject`
+- `message`
+- `isRead`
 
 ### Navbar Item
 
@@ -889,6 +953,15 @@ Examples:
   "error": "Validation failed"
 }
 ```
+
+## Security
+
+### Rate Limiting
+
+The API implements rate limiting to prevent abuse:
+
+- **General API**: 100 requests per 15 minutes per IP.
+- **Login**: 10 attempts per hour per IP.
 
 ## Frontend / Admin Integration
 

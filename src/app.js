@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import multer from "multer";
+import rateLimit from "express-rate-limit";
+import mongoose from "mongoose";
 
 import newsRoutes from "./routes/news.routes.js";
 import { resolveSlugById } from "./controllers/news.controller.js";
@@ -15,6 +17,8 @@ import metricsRoutes from "./routes/metrics.routes.js";
 import settingsRoutes from "./routes/settings.routes.js";
 import uploadRoutes from "./routes/upload.routes.js";
 import usersRoutes from "./routes/users.routes.js";
+import communicationRoutes from "./routes/communication.routes.js";
+import seoRoutes from "./routes/seo.routes.js";
 
 const app = express();
 
@@ -27,8 +31,30 @@ app.use(cors({
 }));
 app.use(express.json());
 
+const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: { error: "Too many requests, please try again later." },
+});
+
+const authLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 10, // Limit each IP to 10 login attempts per hour
+    message: { error: "Too many login attempts, please try again in an hour." },
+});
+
+app.use("/api/v1/", generalLimiter);
+app.use("/api/v1/auth/login", authLimiter);
+
 app.get("/api/v1/health", (req, res) => {
-    res.json({ success: true, message: "API is running" });
+    const status = {
+        success: true,
+        message: "API is running",
+        timestamp: new Date(),
+        uptime: process.uptime(),
+        mongoStatus: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected",
+    };
+    res.json(status);
 });
 
 app.get("/api/news/resolve-slug/:id", resolveSlugById);
@@ -44,6 +70,8 @@ app.use("/api/v1/settings/logo", logoRoutes);
 app.use("/api/v1/admin/metrics", metricsRoutes);
 app.use("/api/v1/upload", uploadRoutes);
 app.use("/api/v1/users", usersRoutes);
+app.use("/api/v1/communication", communicationRoutes);
+app.use("/", seoRoutes);
 
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
