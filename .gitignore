@@ -30,3 +30,6 @@ coverage/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Project artifacts
+_full-project-inspect/
