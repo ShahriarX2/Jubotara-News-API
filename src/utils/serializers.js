@@ -12,9 +12,11 @@ export const serializeNews = (news) => ({
     reporterInfo: news.reporterInfo,
     publishedAt: news.publishedAt,
     isFeatured: news.isFeatured,
+    status: news.status,
     metaTitle: news.metaTitle,
     metaDescription: news.metaDescription,
     viewsCount: news.viewsCount,
+    authorName: news.authorName || (news.authorId && typeof news.authorId === 'object' ? news.authorId.name : null),
     tags: news.tags || [],
 });
 

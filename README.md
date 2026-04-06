@@ -142,7 +142,8 @@ Role behavior:
 - `PUT /news/:id`
 - `DELETE /news/:id`
 - `POST /category`
-- `DELETE /category/:slug`
+- `PUT /category/:id`
+- `DELETE /category/:id`
 - `POST /team`
 - `PUT /team/:id`
 - `DELETE /team/:id`
@@ -183,7 +184,7 @@ Response:
 
 ### Public Frontend API
 
-New stable endpoints for the public website. These are under `/api/v1/frontend/*` and provide stable, read-only data shapes.
+New stable endpoints for the public website. These are under `/api/v1/frontend/*` and provide stable, read-only data shapes. News items in these responses include `authorName` and `status`.
 
 #### `GET /api/v1/frontend/settings`
 
@@ -323,6 +324,10 @@ Response:
 }
 ```
 
+Notes:
+
+- The JWT token payload includes `id`, `role`, and `name`.
+
 #### `GET /api/v1/auth/me`
 
 Get the authenticated user.
@@ -358,15 +363,26 @@ Query params:
 
 Notes:
 
-- Public requests default to `published`
-- Authenticated non-admin users can only view their own non-published news when `status` is requested
+- Public requests (no auth) default to `status: "published"`
+- Admins see all news by default or filter by `status`
+- Non-admin users see published news AND their own news when no `status` is specified
+- If a specific status (not "published") is requested by a non-admin, they only see their own news for that status
+- `category`: supports `all` or a specific category name
+- `status`: supports `published`, `pending`, `draft`, or `all`
+- `authorName`: Included in the response for each news item.
 
 Response:
 
 ```json
 {
   "success": true,
-  "data": [],
+  "data": [
+    {
+      "...": "...",
+      "authorName": "Author Name",
+      "status": "published"
+    }
+  ],
   "newsheadline": [],
   "totalCount": 0,
   "filteredCount": 0,
@@ -568,9 +584,28 @@ Notes:
 - `slug` must be provided by the client
 - the API does not auto-generate category slugs
 
-#### `DELETE /api/v1/category/:slug`
+#### `PUT /api/v1/category/:id`
 
-Delete a category by slug.
+Update a category by MongoDB ID.
+
+Auth required: admin
+
+Request body:
+
+```json
+{
+  "name": "New Politics Name",
+  "slug": "new-politics-slug"
+}
+```
+
+Notes:
+
+- If `name` is updated, all associated `News` items will have their `category` field updated automatically.
+
+#### `DELETE /api/v1/category/:id`
+
+Delete a category by MongoDB ID.
 
 Auth required: admin
 

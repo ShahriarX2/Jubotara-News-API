@@ -26,7 +26,7 @@ export const createNews = asyncHandler(async (req, res) => {
     const payload = {
         ...req.body,
         authorId: req.user.id,
-        authorName: req.body.authorName || req.user.name,
+        authorName: req.body.authorName || req.user.name || "Unknown Author",
     };
 
     if (!isAdminRole(req.user.role)) {
@@ -46,18 +46,29 @@ export const getNews = asyncHandler(async (req, res) => {
     const requestedStatus = req.query.status;
     const query = {};
 
+    // Filter by status
     if (requestedStatus && requestedStatus !== "all") {
         query.status = requestedStatus;
-    } else if (!requestedStatus || !req.user) {
+    } else if (!req.user) {
+        // Public view always only shows published
         query.status = "published";
     }
 
+    // Filter by category
     if (category && category !== "all") {
         query.category = decodeURIComponent(category);
     }
 
-    if (requestedStatus && req.user && !isAdminRole(req.user.role) && requestedStatus !== "published") {
-        query.authorId = req.user.id;
+    // For non-admin users, restrict view to published news or their own news
+    if (req.user && !isAdminRole(req.user.role)) {
+        if (query.status && query.status !== "published") {
+            query.authorId = req.user.id;
+        } else if (!query.status) {
+            query.$or = [
+                { status: "published" },
+                { authorId: req.user.id }
+            ];
+        }
     }
 
     const [newsheadline, totalCount, filteredCount, news] = await Promise.all([
@@ -65,6 +76,7 @@ export const getNews = asyncHandler(async (req, res) => {
         News.countDocuments({ status: "published" }),
         News.countDocuments(query),
         News.find(query)
+            .populate("authorId", "name")
             .sort({ publishedAt: -1 })
             .skip(skip)
             .limit(limit)
@@ -73,7 +85,10 @@ export const getNews = asyncHandler(async (req, res) => {
 
     res.json({
         success: true,
-        data: news,
+        data: news.map(item => ({
+            ...item,
+            authorName: item.authorName || (item.authorId && typeof item.authorId === 'object' ? item.authorId.name : null) || "Unknown Author"
+        })),
         newsheadline,
         totalCount,
         filteredCount,
