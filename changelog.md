@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-05-30
+
+### Added
+- **Multi-Provider Storage**: Added Cloudflare R2 as a storage provider alongside Cloudinary.
+- **Storage Abstraction**: Implemented a unified storage system in `src/utils/storage` to handle uploads and deletions across different providers.
+- **Image Lifecycle Management**: Added automatic cleanup of orphan images if database operations fail.
+- **Image Replacement**: Implemented logic to delete old images when they are replaced during news updates.
+- **Storage Metrics**: Added `GET /api/v1/admin/metrics/storage` endpoint to track monthly usage for Cloudinary and Cloudflare R2.
+- **News Tracking**: Added `imagePublicId` and `imageProvider` to `News` model to manage cloud files reliably.
+
+### Changed
+- Refactored `News` and `Upload` controllers to use the new unified storage system.
+- Updated `Settings` to allow admins to choose the `active_storage_provider`.
+
 ## [1.1.1] - 2026-04-05
 
 ### Fixed

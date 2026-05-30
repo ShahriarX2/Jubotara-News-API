@@ -1,6 +1,6 @@
 import News from "../models/news.model.js";
 import asyncHandler from "../utils/async-handler.js";
-import uploadBufferToCloudinary from "../utils/cloudinary.js";
+import { uploadFile as storageUpload, deleteFile as storageDelete } from "../utils/storage/index.js";
 import { isAdminRole } from "../middleware/auth.middleware.js";
 
 // Create News
@@ -10,9 +10,12 @@ export const createNews = asyncHandler(async (req, res) => {
         req.files?.imageSrc?.[0] ??
         req.file;
 
+    let uploadResult = null;
     if (uploadedFile) {
-        const result = await uploadBufferToCloudinary(uploadedFile.buffer);
-        req.body.imageSrc = result.secure_url;
+        uploadResult = await storageUpload(uploadedFile);
+        req.body.imageSrc = uploadResult.secure_url;
+        req.body.imagePublicId = uploadResult.public_id;
+        req.body.imageProvider = uploadResult.provider;
     }
 
     if (req.body.tags && typeof req.body.tags === "string") {
@@ -33,8 +36,17 @@ export const createNews = asyncHandler(async (req, res) => {
         payload.status = "pending";
     }
 
-    const news = await News.create(payload);
-    res.status(201).json({ success: true, data: news });
+    try {
+        const news = await News.create(payload);
+        res.status(201).json({ success: true, data: news });
+    } catch (error) {
+        // If news creation fails, delete the uploaded image to avoid costs
+        if (uploadResult) {
+            console.log(`[Cleanup] Deleting image due to news creation failure: ${uploadResult.public_id}`);
+            await storageDelete(uploadResult.public_id, uploadResult.provider);
+        }
+        throw error;
+    }
 });
 
 // Get All News
@@ -155,15 +167,26 @@ export const updateNews = asyncHandler(async (req, res) => {
         req.files?.imageSrc?.[0] ??
         req.file;
 
-    if (uploadedFile) {
-        const result = await uploadBufferToCloudinary(uploadedFile.buffer);
-        req.body.imageSrc = result.secure_url;
-    }
-
     const existingNews = await News.findById(req.params.id);
 
     if (!existingNews) {
         return res.status(404).json({ error: "News not found" });
+    }
+
+    let uploadResult = null;
+    let oldImageInfo = null;
+
+    if (uploadedFile) {
+        // Prepare to delete old image if upload successful
+        oldImageInfo = {
+            publicId: existingNews.imagePublicId,
+            provider: existingNews.imageProvider
+        };
+
+        uploadResult = await storageUpload(uploadedFile);
+        req.body.imageSrc = uploadResult.secure_url;
+        req.body.imagePublicId = uploadResult.public_id;
+        req.body.imageProvider = uploadResult.provider;
     }
 
     if (!isAdminRole(req.user.role)) {
@@ -204,6 +227,8 @@ export const updateNews = asyncHandler(async (req, res) => {
         "reporterInfo",
         "imageCaption",
         "imageSrc",
+        "imagePublicId",
+        "imageProvider",
         "status",
         "isFeatured",
         "metaTitle",
@@ -219,9 +244,25 @@ export const updateNews = asyncHandler(async (req, res) => {
     }
 
     Object.assign(existingNews, patch);
-    const updated = await existingNews.save();
+    
+    try {
+        const updated = await existingNews.save();
 
-    res.json(updated);
+        // If DB update succeeded AND we had a new upload, delete the OLD image
+        if (uploadResult && oldImageInfo?.publicId) {
+            console.log(`[Cleanup] Deleting replaced image: ${oldImageInfo.publicId}`);
+            await storageDelete(oldImageInfo.publicId, oldImageInfo.provider);
+        }
+
+        res.json(updated);
+    } catch (error) {
+        // If DB update fails AND we had a new upload, delete the NEW image
+        if (uploadResult) {
+            console.log(`[Cleanup] Deleting new image due to update failure: ${uploadResult.public_id}`);
+            await storageDelete(uploadResult.public_id, uploadResult.provider);
+        }
+        throw error;
+    }
 });
 
 export const deleteNews = asyncHandler(async (req, res) => {
@@ -239,6 +280,12 @@ export const deleteNews = asyncHandler(async (req, res) => {
         if (existingNews.status === "published") {
             return res.status(403).json({ message: "Cannot delete published news." });
         }
+    }
+
+    // Delete image from cloud before deleting news from DB
+    if (existingNews.imagePublicId) {
+        console.log(`[Cleanup] Deleting image for news ${req.params.id}: ${existingNews.imagePublicId}`);
+        await storageDelete(existingNews.imagePublicId, existingNews.imageProvider);
     }
 
     await News.findByIdAndDelete(req.params.id);

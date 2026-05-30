@@ -955,7 +955,7 @@ Fields:
 Fields:
 
 - `key`
-- `value`
+- `value` (e.g., `active_storage_provider`: `r2`)
 - `description`
 
 ### Logo
@@ -1009,6 +1009,37 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api/v1
 ```
 
 Prefer this API’s base URL for data fetching instead of Next.js **internal** API route handlers. The backend also exposes `GET /api/news/resolve-slug/:id` for ID→slug redirects; that path is served by this Express app, not by Next.js.
+
+## Current Scope
+
+This API is intended to own:
+
+- authentication
+- users
+- news content
+- categories
+- team members
+- videos
+- navbar config
+- settings
+- logo config
+- file upload
+
+Out of scope in this repository:
+
+- epaper service
+- ads management
+
+## Current Gaps
+
+The API is functional, but these items are still open if you want production completeness:
+
+- auth activation flow
+- password change/reset flow
+- request validation improvements
+- automated tests
+- deployment documentation
+by Next.js.
 
 ## Current Scope
 

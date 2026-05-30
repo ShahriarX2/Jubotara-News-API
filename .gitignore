@@ -31,5 +31,8 @@ coverage/
 .DS_Store
 Thumbs.db
 
+# Private scripts
+scripts/cleanup-orphans.js
+
 # Project artifacts
 _full-project-inspect/

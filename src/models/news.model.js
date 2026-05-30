@@ -28,6 +28,15 @@ const newsSchema = new Schema({
         type: String,
         required: true,
     },
+    imagePublicId: {
+        type: String,
+        required: false,
+    },
+    imageProvider: {
+        type: String,
+        enum: ['cloudinary', 'r2'],
+        required: false,
+    },
     imageCaption: {
         type: String,
         required: false, // Optional
