@@ -27,8 +27,8 @@ app.set("trust proxy", 1);
 
 app.use(cors({
     origin: [
-        "https://jubotaranews.com",
-        "http://localhost:3000",
+        process.env.FRONTEND_URL,
+        process.env.ADMIN_URL
     ],
     credentials: true,
 }));
