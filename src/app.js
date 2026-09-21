@@ -25,11 +25,21 @@ const app = express();
 // Trust proxy for rate limiting (needed behind proxies like Render)
 app.set("trust proxy", 1);
 
+const parseOrigins = (urls) =>
+    (urls || "")
+        .split(",")
+        .map((url) => url.trim().replace(/\/+$/, ""))
+        .filter(Boolean);
+
+const allowedOrigins = [
+    ...parseOrigins(process.env.FRONTEND_URL),
+    ...parseOrigins(process.env.ADMIN_URL),
+    ...parseOrigins(process.env.ALLOWED_ORIGINS),
+    /^https?:\/\/(localhost|127\.0\.0\.1)(:[0-9]+)?$/,
+];
+
 app.use(cors({
-    origin: [
-        process.env.FRONTEND_URL,
-        process.env.ADMIN_URL
-    ],
+    origin: allowedOrigins,
     credentials: true,
 }));
 app.use(express.json());
