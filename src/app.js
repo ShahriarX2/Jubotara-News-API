@@ -59,7 +59,7 @@ const authLimiter = rateLimit({
 app.use("/api/v1/", generalLimiter);
 app.use("/api/v1/auth/login", authLimiter);
 
-app.get("/api/v1/health", (req, res) => {
+const healthHandler = (req, res) => {
     const status = {
         success: true,
         message: "API is running",
@@ -68,7 +68,13 @@ app.get("/api/v1/health", (req, res) => {
         mongoStatus: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected",
     };
     res.json(status);
+};
+
+app.get("/", (req, res) => {
+    res.json({ success: true, message: "Jubotara News API is running" });
 });
+app.get("/health", healthHandler);
+app.get("/api/v1/health", healthHandler);
 
 app.get("/api/news/resolve-slug/:id", resolveSlugById);
 app.use("/api/v1/news", newsRoutes);

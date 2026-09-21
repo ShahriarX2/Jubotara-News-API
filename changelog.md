@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Deployment**: Bound server explicitly to 0.0.0.0 and decoupled server startup from initial MongoDB connection to prevent Render deployment port scan timeouts.
+- **Health**: Added `/` and `/health` endpoints alongside `/api/v1/health` for cloud platform health check compatibility.
 - **CORS**: Allowed `localhost` and `127.0.0.1` origins (on any port) to access the API in production for local client development.
 - **CORS**: Added comma-separated parsing and trailing slash normalization for `FRONTEND_URL`, `ADMIN_URL`, and optional `ALLOWED_ORIGINS`.
 
